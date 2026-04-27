@@ -26,4 +26,5 @@ services:
       PGID: 1000
     volumes:
       - /your/music/library:/music
-      - ./cookies.txt:/app/cookies/cookies.txt
+      - ./cookies.txt:/app/cookies/cookies.txt #Optional
+      - ./blocklist.json:/app/blocklist.json:ro #Optional
