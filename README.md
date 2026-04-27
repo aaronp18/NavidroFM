@@ -82,8 +82,14 @@ When the cron schedule re-runs, it deletes all of the downloaded tracks (and nev
    ```
        volumes:
       - /your/music/library:/music
-      - ./cookies.txt:/app/cookies/cookies.txt
+      - ./cookies.txt:/app/cookies/cookies.txt #Optional
+      - ./blocklist.json:/app/blocklist.json:ro #Optional
    ```
+
+   5.1 Blocklist
+   
+      If you don't want to download songs from a specific artist, you can add a blocklist.json file to skip them when downloading. See the `blocklist.json` file in files for an example. 
+   
 7. Deploy and test
    
    Run `docker compose up -d`.
