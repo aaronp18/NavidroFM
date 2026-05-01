@@ -10,6 +10,7 @@ IGNORED, Song Title, Artist Name
 ```
 - There are many websites that will export your playlists in `.csv` format. One that I have used is: [Chosic](https://www.chosic.com/spotify-playlist-exporter/#).
 - In the future, I would like to add support for automatically doing this from the script (so it can be run on a schedule). Playlists such as the Top40 would benifit from this.
+- I've also added support for ARM64 architecture, so you can run this on a Raspberry Pi etc. 
 
 
 ### TODO
@@ -18,7 +19,7 @@ IGNORED, Song Title, Artist Name
 - [ ] Add support for automatically syncing CSV playlists with online source
 - [ ] Add optional [Beets](https://beets.readthedocs.io/en/stable/index.html) auto library management so that on a sync, new songs are added to the library and metadata is cleaned up.
 - [ ] Attempt to reduce image size
-- [ ] 
+- [X] Add ARM64 support. 
 
 # About
 This tool uses public scrobble history to get information about your music taste and recommendations, downloads those songs via [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [ytmusicapi](https://github.com/sigma67/ytmusicapi), then imports them as Navidrome playlists for you to listen to.
@@ -61,7 +62,7 @@ For CSV playlist downloading, the program looks for any csv files in the `csv_pl
 When the cron schedule re-runs, it deletes all of the downloaded tracks (and never your local tracks) and begins the process again.
 
 # Installation
-1. Download `docker-compose.yml` from this repo
+1. Download `docker-compose-default.yml` from this repo and rename it to `docker-compose.yml`.
 2. Configure your environment variables:
 
    Cron defaults to 4:00am on Mondays.
@@ -72,7 +73,7 @@ When the cron schedule re-runs, it deletes all of the downloaded tracks (and nev
       NAVIDROME_PASSWORD: password
       SYNC_SCHEDULE: "0 4 * * 1"
   ```
-3. Configure playlist variables
+1. Configure playlist variables
    
    Playlists all default to false but can be enabled with `"true"` (See below).
    
@@ -100,7 +101,7 @@ When the cron schedule re-runs, it deletes all of the downloaded tracks (and nev
          JAMS_TRACKS: "25"
       ```
    
-5. Set Volumes in compose
+2. Set Volumes in compose
    
    The path for `/your/music/library` can be set to the same path as Navidrome uses. The tool makes its own folder `navidrofm` in which it places its downloaded songs.
    
@@ -109,6 +110,7 @@ When the cron schedule re-runs, it deletes all of the downloaded tracks (and nev
       - /your/music/library:/music
       - ./cookies.txt:/app/cookies/cookies.txt #Optional
       - ./blocklist.json:/app/blocklist.json:ro #Optional
+      - ./csv_playlists:/app/csv_playlists #Optional
    ```
 
    4.1 Cookies
@@ -119,7 +121,7 @@ When the cron schedule re-runs, it deletes all of the downloaded tracks (and nev
    
       If you don't want to download songs from a specific artist, you can add a blocklist.json file to skip them when downloading. See the `blocklist.json` file in files for an example. 
    
-7. Deploy and test
+3. Deploy and test
    
    Run `docker compose up -d`.
    
@@ -135,6 +137,14 @@ At the time of writing, 4rft5 (the original author) is requesting assistance for
    * Making the image smaller (I'm not good at Docker optimization)
 
    * A reliable, faster way to scan the library after a download is done. I might skip scanning entirely and just use smart playlists. Let me know how you'd like to see this implemented.
+
+### Building Docker Container
+- Building docker containers are quite straight forward. 
+- To build multiplatform images (amd64 and arm64), you can use the following command:
+
+```
+docker buildx build --platform linux/amd64,linux/arm64 -t yourusername/navidrofm --push .
+```
 
 ## Issues
 If you encounter an issue, you can open an issue here. Please provide logs from everything to help me better help you.
