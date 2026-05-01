@@ -1,18 +1,42 @@
 # NavidroFM
-Generate automatic Spotify-like playlists for your Navidrome instance.
+Generate automatic Spotify-like playlists for your Navidrome instance, as well as automatically creating playlists from csv files.
+
+## Aaron's Fork Information
+- This is a fork of [NavidroFM](https://github.com/4rft5/NavidroFM), which is great for LastFM and ListenBrainz recommended playlists but I wanted to automatically sync playlists such as Top 40 etc.
+- Therefore I refactored the codebase to making adding other sources of playlists easier.
+- CSV files need to have the following format. All other fields are ignored (as websites export in slightly different formats). The script ignores the header row if it contains words such as ID, Title, Artist, etc
+```
+IGNORED, Song Title, Artist Name
+```
+- There are many websites that will export your playlists in `.csv` format. One that I have used is: [Chosic](https://www.chosic.com/spotify-playlist-exporter/#).
+- In the future, I would like to add support for automatically doing this from the script (so it can be run on a schedule). Playlists such as the Top40 would benifit from this.
+
+
+### TODO
+- [X] Refactor codebase
+- [X] Add CSV playlist support
+- [ ] Add support for automatically syncing CSV playlists with online source
+- [ ] Add optional [Beets](https://beets.readthedocs.io/en/stable/index.html) auto library management so that on a sync, new songs are added to the library and metadata is cleaned up.
+- [ ] Attempt to reduce image size
+- [ ] 
 
 # About
 This tool uses public scrobble history to get information about your music taste and recommendations, downloads those songs via [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [ytmusicapi](https://github.com/sigma67/ytmusicapi), then imports them as Navidrome playlists for you to listen to.
 
+It also can load `.csv` files from the `csv_playlists` directory and create playlists based on the song title and artist name in those files. Useful for exporting playlists from other services or creating your own custom playlists. 
+
+I have used [Chosic](https://www.chosic.com/spotify-playlist-exporter/#) to export playlists from Spotify in the correct format.
+
 ## Playlists
 
-| Provider     | Playlist             | Function                                       |
-| ------------ | -------------------- | ---------------------------------------------- |
-| LastFM       | Discover Recommended | Recommendations of songs you may like.         |
-| LastFM       | Recommended Mix      | Mix of tracks to discover and tracks you know. |
-| LastFM       | Library Mix          | Mix of songs from your existing library.       |
-| ListenBrainz | Weekly Exploration   | Discover new tracks based on your history.     |
-| ListenBrainz | Weekly Jams          | Mix of songs, both new and from your library.  |
+| Provider     | Playlist             | Function                                              |
+| ------------ | -------------------- | ----------------------------------------------------- |
+| LastFM       | Discover Recommended | Recommendations of songs you may like.                |
+| LastFM       | Recommended Mix      | Mix of tracks to discover and tracks you know.        |
+| LastFM       | Library Mix          | Mix of songs from your existing library.              |
+| ListenBrainz | Weekly Exploration   | Discover new tracks based on your history.            |
+| ListenBrainz | Weekly Jams          | Mix of songs, both new and from your library.         |
+| CSV          | Custom Playlists     | Create playlists from csv files in `./csv_playlists/` |
 
 Note: The LastFM Library playlist will never download any tracks, instead it simply queries the songs and searches Navidrome for them to add to the playlist.
 
@@ -31,6 +55,8 @@ Library Mix: https://www.last.fm/player/station/user/username/library
 This tool runs on a cron schedule using `TZ` that gets songs from the endpoints based on the usernames you provide in `docker-compose`.
 
 After querying enough songs (plus backups in case a download or search fails) to fulfill the playlist criteria, the tool begins querying the YouTube Music API to find and download the tracks and apply correct metadata. Already existing tracks in Navidrome are skipped. Once the download is complete, the tool searches Navidrome for the tracks and adds them to the corresponding playlist.
+
+For CSV playlist downloading, the program looks for any csv files in the `csv_playlists` directory and creates playlists based on the filename (without the .csv). It then parses the csv file for song title and artist name, searches Navidrome for the track, and adds it to the playlist. If it cannot be found it uses YT Music to download it. The tool ignores the header row if it contains words such as ID, Title, Artist, etc.
 
 When the cron schedule re-runs, it deletes all of the downloaded tracks (and never your local tracks) and begins the process again.
 
@@ -104,7 +130,7 @@ When the cron schedule re-runs, it deletes all of the downloaded tracks (and nev
 ## Contributions
 If you want to add something or clean up code, feel free to open a PR on this repo.
 
-Right now I am looking for assistance in:
+At the time of writing, 4rft5 (the original author) is requesting assistance for the following:
 
    * Making the image smaller (I'm not good at Docker optimization)
 

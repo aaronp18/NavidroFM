@@ -7,6 +7,7 @@ PYTHON_PATH=$(which python3)
 
 cat > /app/cron-env.sh << EOF
 #!/bin/bash
+export LEGACY="${LEGACY}"
 export LASTFM_USERNAME="${LASTFM_USERNAME}"
 export NAVIDROME_URL="${NAVIDROME_URL}"
 export NAVIDROME_USERNAME="${NAVIDROME_USERNAME}"
@@ -29,13 +30,14 @@ export JAMS_TRACKS="${JAMS_TRACKS}"
 export JAMS_SCHEDULE="${JAMS_SCHEDULE}"
 export SYNC_SCHEDULE="${SYNC_SCHEDULE}"
 export TZ="${TZ}"
+export CSV_ENABLED="${CSV_ENABLED}"
 export PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
 EOF
 
 chmod +x /app/cron-env.sh
 
 ANY_ENABLED=false
-if [ "${RECOMMENDED}" = "true" ] || [ "${MIX}" = "true" ] || [ "${LIBRARY}" = "true" ]; then
+if [ "${RECOMMENDED}" = "true" ] || [ "${MIX}" = "true" ] || [ "${LIBRARY}" = "true" ] || [ "${CSV_ENABLED}" = "true" ]; then
     ANY_ENABLED=true
 fi
 if [ -n "${LZ_USERNAME}" ]; then
@@ -48,21 +50,22 @@ if [ "$ANY_ENABLED" = "true" ]; then
     if [ -n "${SYNC_SCHEDULE}" ]; then
         SCHEDULE="${SYNC_SCHEDULE}"
     else
-        SCHEDULE="0 4 * * 1" 
+        SCHEDULE="0 4 * * 1"
         
         if [ "${RECOMMENDED}" = "true" ]; then
             SCHEDULE="${RECOMMENDED_SCHEDULE:-0 4 * * 1}"
-        elif [ "${MIX}" = "true" ]; then
+            elif [ "${MIX}" = "true" ]; then
             SCHEDULE="${MIX_SCHEDULE:-0 4 * * 1}"
-        elif [ "${LIBRARY}" = "true" ]; then
+            elif [ "${LIBRARY}" = "true" ]; then
             SCHEDULE="${LIBRARY_SCHEDULE:-0 4 * * 1}"
-        elif [ "${EXPLORATION}" = "true" ]; then
+            elif [ "${EXPLORATION}" = "true" ]; then
             SCHEDULE="${EXPLORATION_SCHEDULE:-0 4 * * 1}"
-        elif [ "${JAMS}" = "true" ]; then
+            elif [ "${JAMS}" = "true" ]; then
             SCHEDULE="${JAMS_SCHEDULE:-0 4 * * 1}"
         fi
     fi
-    
+
+
     cat > /app/cron-wrapper.sh << 'WRAPPER_EOF'
 #!/bin/bash
 source /app/cron-env.sh
@@ -86,6 +89,7 @@ WRAPPER_EOF
     [ "${LIBRARY}" = "true" ] && echo "  - LastFM Library"
     [ "${EXPLORATION}" = "true" ] && [ -n "${LZ_USERNAME}" ] && echo "  - ListenBrainz Weekly Exploration"
     [ "${JAMS}" = "true" ] && [ -n "${LZ_USERNAME}" ] && echo "  - ListenBrainz Weekly Jams"
+    [ "${CSV_ENABLED}" = "true" ] && echo "  - CSV Playlists"
     echo ""
 else
     echo "No playlists enabled"
@@ -98,7 +102,8 @@ if [ "${RUN_ON_STARTUP}" = "true" ]; then
         echo "Running initial sync..."
         echo "=========================================="
         echo ""
-        ${PYTHON_PATH} /app/app.py all 2>&1
+        # ${PYTHON_PATH} /app/app.py csv 2>&1
+        ${PYTHON_PATH} -u /app/app.py all
         echo ""
         echo "=========================================="
         echo "Initial sync completed"

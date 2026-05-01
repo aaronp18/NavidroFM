@@ -1,13 +1,13 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 RUN set -ex && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-        cron \
-        curl \
-        unzip \
-        xz-utils \
-        ca-certificates && \
+    cron \
+    curl \
+    unzip \
+    xz-utils \
+    ca-certificates && \
     curl -L https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -o /tmp/ffmpeg.tar.xz && \
     tar -xf /tmp/ffmpeg.tar.xz -C /tmp && \
     mv /tmp/ffmpeg-*-amd64-static/ffmpeg /usr/local/bin/ && \
@@ -31,7 +31,10 @@ RUN pip install --no-cache-dir \
     rm -rf /root/.cache/pip
 
 WORKDIR /app
-COPY app.py entrypoint.sh /app/
+COPY src/*.py entrypoint.sh /app/
+
+ENV PYTHONUNBUFFERED=1
+
 RUN chmod +x /app/entrypoint.sh && \
     mkdir -p /music/navidrofm /app/cookies && \
     chmod -R 777 /music /app/cookies && \

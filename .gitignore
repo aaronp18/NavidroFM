@@ -4,3 +4,6 @@
 *.env
 
 cookies.txt
+docker-compose.yml
+
+csv_playlists/

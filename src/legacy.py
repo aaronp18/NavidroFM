@@ -11,7 +11,6 @@ import secrets
 import fcntl
 from pathlib import Path
 from typing import List, Dict, Optional
-from ytmusicapi import YTMusic
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -150,6 +149,11 @@ class NavidroFM:
                 "name": "Library Mix",
                 "dir": None,
                 "schedule": os.getenv("LIBRARY_SCHEDULE", "0 4 * * 1"),
+            },
+            "csv": {
+                "enabled": os.getenv("CSV_ENABLED", "false").lower() == "true",
+                "dir": self.music_dir / "csv",
+                "schedule": os.getenv("CSV_SCHEDULE", "0 4 * * 1"),
             },
         }
 
@@ -1213,6 +1217,7 @@ class NavidroFM:
 def main():
     if len(sys.argv) < 2:
         log("Usage: app.py <recommended|mix|library|exploration|jams|all>")
+        log("CSV Example: app.py csv [path/to/csvfile.csv]")
         sys.exit(1)
 
     playlist_type = sys.argv[1]
@@ -1229,6 +1234,10 @@ def main():
                 syncer.sync_playlist(ptype)
             for ptype in ["exploration", "jams"]:
                 syncer.sync_playlist(ptype)
+        elif playlist_type == "csv":
+            if len(sys.argv) < 3:
+                log("Using all CSV files in the csv directory")
+
         else:
             syncer.sync_playlist(playlist_type)
 
