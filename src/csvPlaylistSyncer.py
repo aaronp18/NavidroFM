@@ -14,6 +14,7 @@ from typing import List, Dict, Optional
 from ytmusicapi import YTMusic
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import pyparsing
 
 import logging
 
@@ -46,7 +47,14 @@ class CSVPlaylistSyncer:
                         lines = f.readlines()
                     tracks = []
                     for line in lines:
-                        parts = line.strip().split(",")
+
+                        # Strip double quotes at parse
+                        csv_line = pyparsing.common.comma_separated_list.copy().add_parse_action(
+                            pyparsing.token_map(lambda s: s.strip('"'))
+                        )
+
+                        parts = csv_line.parse_string(line.strip()).as_list()
+                        # parts = line.strip().split(",")
                         # If is csv title, then skip
                         if len(parts) >= 2 and parts[0].lower() in [
                             "id",
@@ -106,7 +114,7 @@ class CSVPlaylistSyncer:
         if playlist_dir.exists():
             logger.info(f"\nClearing old songs in {playlist_dir}")
             file_count = 0
-            for file in playlist_dir.glob("*"):
+            for file in playlist_dir.glob("*.mp3"):
                 if file.is_file():
                     try:
                         file.unlink()
@@ -174,7 +182,18 @@ class CSVPlaylistSyncer:
                 else:
                     logger.info(f"  Download failed, trying next backup track")
             else:
-                logger.info(f"  Not found on YouTube Music, trying next backup track")
+                logger.warning(f"  Not found on YouTube Music, saving to failed list")
+                try:
+                    with open(
+                        Path(playlist_dir, "failed_tracks.csv"), "a", encoding="utf-8"
+                    ) as f:
+                        # ID, title, artist, timestamp, playlist name
+                        timestamp = datetime.now(ZoneInfo("UTC")).isoformat()
+                        f.write(
+                            f"0, '{title}', '{artist}', '{timestamp}', '{playlist_name}'\n"
+                        )
+                except Exception as e:
+                    logger.error(f"  Failed to write to failed_tracks.csv: {e}")
 
             time.sleep(1)
 

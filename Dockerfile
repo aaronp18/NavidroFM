@@ -44,6 +44,7 @@ RUN pip install --no-cache-dir \
     requests \
     yt-dlp[default] \
     ytmusicapi \
+    pyparsing \
     mutagen && \
     rm -rf /root/.cache/pip
 

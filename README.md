@@ -11,6 +11,7 @@ IGNORED, Song Title, Artist Name
 - There are many websites that will export your playlists in `.csv` format. One that I have used is: [Chosic](https://www.chosic.com/spotify-playlist-exporter/#).
 - In the future, I would like to add support for automatically doing this from the script (so it can be run on a schedule). Playlists such as the Top40 would benifit from this.
 - I've also added support for ARM64 architecture, so you can run this on a Raspberry Pi etc. 
+- Songs that cannot be downloaded from YT music or found in Navidrome are logged in `failed_tracks.csv` in the playlist directory for manual review and downloading.
 
 
 ### TODO
@@ -20,6 +21,8 @@ IGNORED, Song Title, Artist Name
 - [ ] Add optional [Beets](https://beets.readthedocs.io/en/stable/index.html) auto library management so that on a sync, new songs are added to the library and metadata is cleaned up.
 - [ ] Attempt to reduce image size
 - [X] Add ARM64 support. 
+- [ ] Change update frequency of different playlists. For example, the Top 40 would need to be updated more frequently than the LastFM recommended playlist.
+- [X] Create log of failed downloads and searches to attempt to download manually
 
 # About
 This tool uses public scrobble history to get information about your music taste and recommendations, downloads those songs via [yt-dlp](https://github.com/yt-dlp/yt-dlp) and [ytmusicapi](https://github.com/sigma67/ytmusicapi), then imports them as Navidrome playlists for you to listen to.
@@ -57,7 +60,7 @@ This tool runs on a cron schedule using `TZ` that gets songs from the endpoints 
 
 After querying enough songs (plus backups in case a download or search fails) to fulfill the playlist criteria, the tool begins querying the YouTube Music API to find and download the tracks and apply correct metadata. Already existing tracks in Navidrome are skipped. Once the download is complete, the tool searches Navidrome for the tracks and adds them to the corresponding playlist.
 
-For CSV playlist downloading, the program looks for any csv files in the `csv_playlists` directory and creates playlists based on the filename (without the .csv). It then parses the csv file for song title and artist name, searches Navidrome for the track, and adds it to the playlist. If it cannot be found it uses YT Music to download it. The tool ignores the header row if it contains words such as ID, Title, Artist, etc.
+For CSV playlist downloading, the program looks for any csv files in the `csv_playlists` directory and creates playlists based on the filename (without the .csv). It then parses the csv file for song title and artist name, searches Navidrome for the track, and adds it to the playlist. If it cannot be found it uses YT Music to download it. The tool ignores the header row if it contains words such as ID, Title, Artist, etc. Any failed downloads or searches are logged in `failed_tracks.csv` in the playlist directory for manual review and downloading.
 
 When the cron schedule re-runs, it deletes all of the downloaded tracks (and never your local tracks) and begins the process again.
 
