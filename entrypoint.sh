@@ -31,6 +31,7 @@ export JAMS_SCHEDULE="${JAMS_SCHEDULE}"
 export SYNC_SCHEDULE="${SYNC_SCHEDULE}"
 export TZ="${TZ}"
 export CSV_ENABLED="${CSV_ENABLED}"
+export REMOVE_OLD_TRACKS="${REMOVE_OLD_TRACKS}"
 export PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin"
 EOF
 

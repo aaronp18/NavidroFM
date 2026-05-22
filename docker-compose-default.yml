@@ -25,6 +25,7 @@ services:
       JAMS: "true"
       JAMS_TRACKS: "25"
       RUN_ON_STARTUP: "false"
+      REMOVE_OLD_TRACKS: "false"
       PUID: 1000
       PGID: 1000
     volumes:

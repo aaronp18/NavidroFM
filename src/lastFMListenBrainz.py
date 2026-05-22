@@ -36,6 +36,8 @@ class ListenBrainzLastFM:
             logger.warning(f"Warning: Invalid timezone '{tz_name}', using UTC")
             self.timezone = ZoneInfo("UTC")
 
+        self.removeOldTracks = os.getenv("REMOVE_OLD_TRACKS", "false").lower() == "true"
+
         # Load artist blocklist from /app/blocklist.json if present.
         # Format: {"artists": ["Artist Name", "Another Artist"]}
         # Matching is case-insensitive.
@@ -411,22 +413,25 @@ class ListenBrainzLastFM:
             playlist_dir = config["dir"]
 
             if playlist_dir.exists():
-                logger.info(f"\nClearing old songs in {playlist_dir}")
-                file_count = 0
-                for file in playlist_dir.glob("*"):
-                    if file.is_file():
-                        try:
-                            file.unlink()
-                            file_count += 1
-                        except Exception as e:
-                            logger.info(f"  Warning: Could not delete {file}: {e}")
-                logger.info(f"Removed {file_count} old songs")
 
-                if file_count > 0:
-                    self.cleanup_missing_files()
+                # Only remove old files if enabled.
+                if self.removeOldTracks:
+                    logger.info(f"\nClearing old songs in {playlist_dir}")
+                    file_count = 0
+                    for file in playlist_dir.glob("*"):
+                        if file.is_file():
+                            try:
+                                file.unlink()
+                                file_count += 1
+                            except Exception as e:
+                                logger.info(f"  Warning: Could not delete {file}: {e}")
+                    logger.info(f"Removed {file_count} old songs")
 
-                    wait_time = min(max(file_count // 2, 5), 20)
-                    time.sleep(wait_time)
+                    if file_count > 0:
+                        self.cleanup_missing_files()
+
+                        wait_time = min(max(file_count // 2, 5), 20)
+                        time.sleep(wait_time)
             else:
                 playlist_dir.mkdir(parents=True, exist_ok=True)
                 os.chmod(playlist_dir, 0o777)

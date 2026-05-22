@@ -31,6 +31,8 @@ class CSVPlaylistSyncer:
         self.ytdlp = ytdlp
         self.csv_playlists: Dict[str, List[Dict[str, str]]] = {}
         self.loadCSVFiles()
+
+        self.removeOldTracks = os.getenv("REMOVE_OLD_TRACKS", "false").lower() == "true"
         pass
 
     def loadCSVFiles(self):
@@ -110,24 +112,25 @@ class CSVPlaylistSyncer:
         # Create directory for music
         playlist_dir = Path(self.navidrome.music_dir, "csv_playlists", playlist_name)
 
-        # Clear old songs in the playlist directory (means not wanted)
         if playlist_dir.exists():
-            logger.info(f"\nClearing old songs in {playlist_dir}")
-            file_count = 0
-            for file in playlist_dir.glob("*.mp3"):
-                if file.is_file():
-                    try:
-                        file.unlink()
-                        file_count += 1
-                    except Exception as e:
-                        logger.info(f"  Warning: Could not delete {file}: {e}")
-            logger.info(f"Removed {file_count} old songs")
+            # Clear old songs in the playlist directory if enabled
+            if self.removeOldTracks:
+                logger.info(f"\nClearing old songs in {playlist_dir}")
+                file_count = 0
+                for file in playlist_dir.glob("*.mp3"):
+                    if file.is_file():
+                        try:
+                            file.unlink()
+                            file_count += 1
+                        except Exception as e:
+                            logger.info(f"  Warning: Could not delete {file}: {e}")
+                logger.info(f"Removed {file_count} old songs")
 
-            # if file_count > 0:
-            #     self.cleanup_missing_files()
+                # if file_count > 0:
+                #     self.cleanup_missing_files()
 
-            #     wait_time = min(max(file_count // 2, 5), 20)
-        #     time.sleep(wait_time)
+                #     wait_time = min(max(file_count // 2, 5), 20)
+            #     time.sleep(wait_time)
         else:
             playlist_dir.mkdir(parents=True, exist_ok=True)
             os.chmod(playlist_dir, 0o777)

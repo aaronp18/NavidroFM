@@ -123,7 +123,11 @@ When the cron schedule re-runs, it deletes all of the downloaded tracks (and nev
    4.2 Blocklist
    
       If you don't want to download songs from a specific artist, you can add a blocklist.json file to skip them when downloading. See the `blocklist.json` file in files for an example. 
-   
+
+   4.3 Deleting downloaded tracks
+
+      By default, the tool deletes all downloaded tracks on each run. If you want to keep the downloaded tracks, you can set `REMOVE_OLD_TRACKS: "false"`. This will keep all downloaded tracks in the `navidrofm` folder and skip the download if the track already exists. This is useful if you want to manage your library with something like Beets and don't want to redownload songs every time.
+      
 3. Deploy and test
    
    Run `docker compose up -d`.
