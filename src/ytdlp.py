@@ -196,17 +196,17 @@ class YTDLP:
                 str(output_dir / f"{safe_filename}.%(ext)s"),
                 "--format",
                 "bestaudio",
-                "--extractor-args",
-                "youtube:player_client=default,mweb",
+                # "--extractor-args",
+                # "youtube:player_client=tv",
                 "--sleep-interval",
-                "2",
+                "3",
                 "--no-update",
             ]
 
-            if self.cookie_file.exists():
-                cmd.extend(["--cookies", str(self.cookie_file)])
-            else:
-                logger.info(f"  Warning: Cookie file not found at {self.cookie_file}")
+            # if self.cookie_file.exists():
+            #     cmd.extend(["--cookies", str(self.cookie_file)])
+            # else:
+            #     logger.info(f"  Warning: Cookie file not found at {self.cookie_file}")
 
             cmd.append(url)
 
