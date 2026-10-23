@@ -1,9 +1,7 @@
-from pathlib import Path
-import re
-from typing import Dict, Optional
-
-
 import logging
+import re
+from pathlib import Path
+from typing import Dict, Optional
 
 import requests
 
@@ -83,15 +81,15 @@ def normalize_artist_separators(
 def set_metadata(file_path: Path, metadata: Dict):
     """Set metadata and clean comments"""
     try:
+        from mutagen.id3 import APIC, ID3, TALB, TDRC, TIT2, TPE1, TRCK  # type: ignore
         from mutagen.mp3 import MP3
-        from mutagen.id3 import ID3, TPE1, TIT2, TALB, TDRC, TRCK, APIC, COMM  # type: ignore
 
         audio = MP3(file_path, ID3=ID3)
         if audio.tags is None:
             audio.add_tags()
 
         if audio.tags is None:
-            logger.warning(f"  Warning: audio.tags is still None after add_tags()")
+            logger.warning("  Warning: audio.tags is still None after add_tags()")
         else:
             audio.tags.delall("COMM")
 
@@ -129,7 +127,7 @@ def set_metadata(file_path: Path, metadata: Dict):
 
         audio = MP3(file_path, ID3=ID3)
         if audio.tags and audio.tags.getall("COMM"):
-            logger.warning(f"  Warning: Comments still present after deletion")
+            logger.warning("  Warning: Comments still present after deletion")
 
         return artist_value
 

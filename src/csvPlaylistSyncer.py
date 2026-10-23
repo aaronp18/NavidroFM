@@ -1,27 +1,78 @@
 #!/usr/bin/env python3
+import logging
 import os
-import sys
-import json
-import requests
-import subprocess
 import time
-import hashlib
-import re
-import secrets
-import fcntl
-from pathlib import Path
-from typing import List, Dict, Optional
-from ytmusicapi import YTMusic
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
 from zoneinfo import ZoneInfo
+
 import pyparsing
 
-import logging
-
+from config import csv_playlists_dir, env_flag
 from navidrome import Navidrome
 from ytdlp import YTDLP
 
 logger = logging.getLogger(__name__)
+
+# First cell of a header row, as exported by the various playlist exporters
+# (see https://www.chosic.com/spotify-playlist-exporter/ for an example).
+CSV_HEADER_MARKERS = {"id", "title", "artist", "#", "song"}
+
+
+def parse_csv_playlist(csv_path: Path) -> List[Dict[str, object]]:
+    """Parse a CSV playlist export into ``[{"artists": [...], "title": ...}]``.
+
+    Exports differ slightly between services, so parsing is forgiving:
+
+    * only columns 2 (title) and 3 (artists) are used, everything else is ignored
+    * a header row (``ID``, ``Title``, ``Artist``, ``#``, ``Song``) is skipped
+    * blank or unparseable lines are skipped instead of aborting the whole file
+
+    Expected format::
+
+        IGNORED, Song Title, Artist Name
+    """
+    tracks: List[Dict[str, object]] = []
+
+    with open(csv_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    # Parsing is done with pyparsing because artist fields may themselves
+    # contain commas; a naive ``split(",")`` would break them.
+    csv_line = pyparsing.common.comma_separated_list.copy().add_parse_action(
+        pyparsing.token_map(lambda s: s.strip('"'))
+    )
+
+    for line in lines:
+        if not line.strip():
+            continue
+
+        try:
+            parts = csv_line.parse_string(line.strip()).as_list()
+        except pyparsing.ParseBaseException:
+            logger.warning("Skipping unparseable line in %s: %r", csv_path.name, line)
+            continue
+
+        if len(parts) < 3:
+            continue
+
+        # Header row, e.g. "ID,Title,Artist"
+        if str(parts[0]).lower() in CSV_HEADER_MARKERS:
+            continue
+
+        title = str(parts[1]).replace('"', "").replace("'", "").strip()
+        artists = [
+            artist.strip()
+            for artist in str(parts[2])
+            .replace('"', "")
+            .replace("'", "")
+            .strip()
+            .split(",")
+        ]
+        tracks.append({"artists": artists, "title": title})
+
+    return tracks
 
 
 class CSVPlaylistSyncer:
@@ -32,66 +83,30 @@ class CSVPlaylistSyncer:
         self.csv_playlists: Dict[str, List[Dict[str, str]]] = {}
         self.loadCSVFiles()
 
-        self.removeOldTracks = os.getenv("REMOVE_OLD_TRACKS", "false").lower() == "true"
-        pass
+        self.removeOldTracks = env_flag("REMOVE_OLD_TRACKS")
 
     def loadCSVFiles(self):
-        # Load all csvs from /app/csv_playlists/
+        """Load every ``*.csv`` file from the configured playlists directory."""
 
-        self.csv_playlists: Dict[str, List[Dict[str, str]]] = {}
-        csv_dir = Path("/app/csv_playlists")
+        self.csv_playlists = {}
+        csv_dir = csv_playlists_dir()
         logger.info("Loading CSV playlists from: %s", csv_dir)
         if csv_dir.exists() and csv_dir.is_dir():
-            for csv_file in csv_dir.glob("*.csv"):
+            # Sorted so runs (and tests) are deterministic.
+            for csv_file in sorted(csv_dir.glob("*.csv")):
                 playlist_name = csv_file.stem
                 try:
-                    with open(csv_file, "r", encoding="utf-8") as f:
-                        lines = f.readlines()
-                    tracks = []
-                    for line in lines:
-
-                        # Strip double quotes at parse
-                        csv_line = pyparsing.common.comma_separated_list.copy().add_parse_action(
-                            pyparsing.token_map(lambda s: s.strip('"'))
+                    tracks = parse_csv_playlist(csv_file)
+                    for track in tracks:
+                        logger.info(
+                            f"  Loaded track: {track['title']} by {', '.join(track['artists'])}"
                         )
-
-                        parts = csv_line.parse_string(line.strip()).as_list()
-                        # parts = line.strip().split(",")
-                        # If is csv title, then skip
-                        if len(parts) >= 2 and parts[0].lower() in [
-                            "id",
-                            "title",
-                            "artist",
-                            "#",
-                            "song",
-                        ]:
-                            continue
-                        if len(parts) >= 3:
-                            # Most formats include ID, Title, artist etc
-                            # https://www.chosic.com/spotify-playlist-exporter/
-
-                            # Remove quotes if present, strip whitespace
-                            title = parts[1].replace('"', "").replace("'", "").strip()
-                            artists = [
-                                artist.strip()
-                                for artist in parts[2]
-                                .replace('"', "")
-                                .replace("'", "")
-                                .strip()
-                                .split(",")
-                            ]
-                            tracks.append({"artists": artists, "title": title})
-                            logger.info(
-                                f"  Loaded track: {title} by {', '.join(artists)}"
-                            )
                     self.csv_playlists[playlist_name] = tracks
                     logger.info(
                         f"Loaded CSV playlist '{playlist_name}' with {len(tracks)} tracks"
                     )
                 except Exception as e:
-                    logger.warning(
-                        f"Failed to load CSV playlist '{playlist_name}': {e}"
-                    )
+                    logger.warning(f"Failed to load CSV playlist '{playlist_name}': {e}")
         logger.info(f"Total CSV playlists loaded: {len(self.csv_playlists)}")
 
     def syncPlaylist(self, playlist_name: str):
@@ -165,7 +180,7 @@ class CSVPlaylistSyncer:
             existing_song_id = self.navidrome.search_navidrome_track(artist, title)
 
             if existing_song_id:
-                logger.info(f"  Already in Navidrome library, skipping download")
+                logger.info("  Already in Navidrome library, skipping download")
                 song_ids.append(existing_song_id)
                 success_count += 1
                 skipped_count += 1
@@ -179,13 +194,13 @@ class CSVPlaylistSyncer:
                 )
 
                 if downloaded:
-                    logger.info(f"  Downloaded successfully")
+                    logger.info("  Downloaded successfully")
                     success_count += 1
                     downloaded_tracks.append(downloaded)
                 else:
-                    logger.info(f"  Download failed, trying next backup track")
+                    logger.info("  Download failed, trying next backup track")
             else:
-                logger.warning(f"  Not found on YouTube Music, saving to failed list")
+                logger.warning("  Not found on YouTube Music, saving to failed list")
                 try:
                     with open(
                         Path(playlist_dir, "failed_tracks.csv"), "a", encoding="utf-8"

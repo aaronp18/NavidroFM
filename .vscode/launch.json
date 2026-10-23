@@ -1,0 +1,56 @@
+{
+  // Requires a local .env file: cp .env.example .env
+  // The NAVIDROFM_* entries below point the app at this checkout instead of
+  // the container paths (/app/..., /music/...).
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "NavidroFM: CSV playlists",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/app.py",
+      "args": ["csv"],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "NAVIDROFM_CSV_DIR": "${workspaceFolder}/csv_playlists",
+        "NAVIDROFM_COOKIES_FILE": "${workspaceFolder}/cookies.txt",
+        "NAVIDROFM_BLOCKLIST_FILE": "${workspaceFolder}/blocklist.json",
+        "NAVIDROFM_MUSIC_DIR": "${workspaceFolder}/.local/music",
+        "NAVIDROFM_LIBRARY_ROOT": "${workspaceFolder}/.local/music"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "NavidroFM: All sources",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/app.py",
+      "args": ["all"],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src",
+        "NAVIDROFM_CSV_DIR": "${workspaceFolder}/csv_playlists",
+        "NAVIDROFM_COOKIES_FILE": "${workspaceFolder}/cookies.txt",
+        "NAVIDROFM_BLOCKLIST_FILE": "${workspaceFolder}/blocklist.json",
+        "NAVIDROFM_MUSIC_DIR": "${workspaceFolder}/.local/music",
+        "NAVIDROFM_LIBRARY_ROOT": "${workspaceFolder}/.local/music"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Pytest: current file",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${file}", "-vv"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}

@@ -1,12 +1,14 @@
 import hashlib
-import os
 import logging
-from pathlib import Path
+import os
 import secrets
 import time
+from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 import requests
+
+from config import library_root, music_dir
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +18,7 @@ class Navidrome:
         self.navidrome_url = os.getenv("NAVIDROME_URL", "").rstrip("/")
         self.navidrome_user = os.getenv("NAVIDROME_USERNAME")
         self.navidrome_pass = os.getenv("NAVIDROME_PASSWORD")
-        self.music_dir = Path("/music/navidrofm")
+        self.music_dir = music_dir()
 
         if not all([self.navidrome_url, self.navidrome_user, self.navidrome_pass]):
             raise ValueError(
@@ -71,7 +73,7 @@ class Navidrome:
     def get_navidrome_playlist_id(self, playlist_name: str) -> Optional[str]:
         """Get or create playlist from the given name returning the playlist ID"""
         try:
-            logger.info(f"Fetching playlists from Navidrome...")
+            logger.info("Fetching playlists from Navidrome...")
             response = self.make_subsonic_request("getPlaylists")
 
             playlists = (
@@ -176,7 +178,7 @@ class Navidrome:
                 return song_ids
 
             try:
-                relative_path = directory.relative_to("/music")
+                relative_path = directory.relative_to(library_root())
                 library_id = os.getenv("NAVIDROME_LIBRARY_ID", "1")
                 target_path = f"{library_id}:{relative_path}"
 

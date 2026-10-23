@@ -21,8 +21,7 @@ RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
     mv /tmp/ffmpeg-*-amd64-static/ffprobe /usr/local/bin/ && \
     chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe && \
     rm -rf /tmp/ffmpeg*; \
-    \
-    elif [ "$TARGETPLATFORM" = "linux/arm64" ]; then \ 
+    elif [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
     echo "Downloading ffmpeg for arm64 architecture" && \
     curl -L https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz -o /tmp/ffmpeg.tar.xz && \
     tar -xf /tmp/ffmpeg.tar.xz -C /tmp && \
@@ -40,15 +39,14 @@ RUN curl -fsSL https://deno.land/install.sh | sh && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/* /tmp/* /var/tmp/* /root/.cache
 
-RUN pip install --no-cache-dir \
-    requests \
-    yt-dlp[default] \
-    ytmusicapi \
-    pyparsing \
-    mutagen && \
+WORKDIR /app
+
+# Copy requirements first so dependency layers are cached independently of
+# source changes.
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt && \
     rm -rf /root/.cache/pip
 
-WORKDIR /app
 COPY src/*.py entrypoint.sh /app/
 
 ENV PYTHONUNBUFFERED=1

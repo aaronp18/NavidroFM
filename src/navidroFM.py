@@ -1,12 +1,11 @@
 import logging
 import os
-from pathlib import Path
-import sys
 from zoneinfo import ZoneInfo
 
+from blocklist import load_blocked_artists
+from config import music_dir
 from csvPlaylistSyncer import CSVPlaylistSyncer
 from lastFMListenBrainz import ListenBrainzLastFM
-
 from navidrome import Navidrome
 from ytdlp import YTDLP
 
@@ -17,6 +16,7 @@ class NavidroFM:
     def __init__(self):
 
         logger.info("Starting NavidroFM application")
+        logger.info("Music directory: %s", music_dir())
 
         self.navidrome = Navidrome()
         self.ytdlp = YTDLP()
@@ -33,28 +33,9 @@ class NavidroFM:
 
         self.loadBlockedArtists()
 
-        pass
-
     def loadBlockedArtists(self):
-        #         Load artist blocklist from /app/blocklist.json if present.
-        # Format: {"artists": ["Artist Name", "Another Artist"]}
-        # Matching is case-insensitive.
-        self.artist_blocklist: set = set()
-        blocklist_path = Path("/app/blocklist.json")
-        if blocklist_path.exists():
-            try:
-                import json as _json
-
-                with open(blocklist_path) as _f:
-                    _data = _json.load(_f)
-                self.artist_blocklist = {
-                    a.lower().strip() for a in _data.get("artists", [])
-                }
-                logger.info(
-                    f"Loaded artist blocklist: {len(self.artist_blocklist)} entries"
-                )
-            except Exception as e:
-                logger.warn(f"Warning: Could not load blocklist.json: {e}")
+        """Load the optional artist blocklist (``NAVIDROFM_BLOCKLIST_FILE``)."""
+        self.artist_blocklist: set = load_blocked_artists()
 
     def runLastFMListenBrainz(self, playlist_type: str):
         if playlist_type == "all":

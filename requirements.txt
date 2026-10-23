@@ -1,0 +1,7 @@
+# Runtime dependencies. Keep in sync with the "pip install" step in the
+# Dockerfile -- it installs from this file.
+requests
+yt-dlp[default]
+ytmusicapi
+pyparsing
+mutagen

@@ -1,26 +1,25 @@
+import logging
 import os
-from pathlib import Path
-import re
 import subprocess
 import time
+from pathlib import Path
 from typing import Dict, Optional
+
 from ytmusicapi import YTMusic
 
+from config import cookies_file
 from Util import (
-    sanitize_filename,
     normalize_for_matching,
-    normalize_artist_separators,
+    sanitize_filename,
     set_metadata,
 )
-
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 class YTDLP:
     def __init__(self):
-        self.cookie_file = Path("/app/cookies/cookies.txt")
+        self.cookie_file = cookies_file()
 
         try:
             self.ytmusic = YTMusic()
@@ -203,10 +202,10 @@ class YTDLP:
                 "--no-update",
             ]
 
-            # if self.cookie_file.exists():
-            #     cmd.extend(["--cookies", str(self.cookie_file)])
-            # else:
-            #     logger.info(f"  Warning: Cookie file not found at {self.cookie_file}")
+            if self.cookie_file.exists():
+                cmd.extend(["--cookies", str(self.cookie_file)])
+            else:
+                logger.info(f"  Warning: Cookie file not found at {self.cookie_file}")
 
             cmd.append(url)
 
@@ -227,7 +226,7 @@ class YTDLP:
                 return None
 
         except subprocess.TimeoutExpired:
-            logger.info(f"  Timeout")
+            logger.info("  Timeout")
             return None
         except Exception as e:
             logger.info(f"  Error: {e}")

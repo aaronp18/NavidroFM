@@ -1,11 +1,10 @@
-from fcntl import fcntl
+import argparse
+import fcntl
 import logging
 import sys
 
-import fcntl
+from config import lock_file
 from navidroFM import NavidroFM
-
-import argparse
 
 logging.basicConfig(
     # filename="/app/logs/navidrofm.log",
@@ -14,13 +13,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-LOCK_FILE = "/tmp/navidrofm.lock"
-
 
 def acquire_lock():
     """Try to acquire lock, return file descriptor or None"""
     try:
-        lock_fd = open(LOCK_FILE, "w")
+        lock_fd = open(lock_file(), "w")
         fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         return lock_fd
     except (IOError, OSError):
@@ -33,7 +30,7 @@ def release_lock(lock_fd):
         try:
             fcntl.flock(lock_fd, fcntl.LOCK_UN)
             lock_fd.close()
-        except:
+        except (IOError, OSError):
             pass
 
 

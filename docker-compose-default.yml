@@ -1,35 +1,43 @@
+# Starter compose file.
+#
+#   cp .env.example .env   # fill in your values
+#   docker compose -f docker-compose-default.yml up -d
+#
+# Every value below can be overridden from `.env` (or the shell) using
+# ${VARIABLE:-default} interpolation. The defaults keep the file usable even
+# without a .env file.
 services:
   navidrofm:
     # image: ghcr.io/4rft5/navidrofm:latest
-    image: aaronp18/navidrofm
+    image: ${NAVIDROFM_IMAGE:-aaronp18/navidrofm}
     container_name: navidrofm
     restart: unless-stopped
     network_mode: host
     environment:
-      TZ: Europe/London
-      LASTFM_USERNAME: NAME
-      LZ_USERNAME: NAME
-      NAVIDROME_URL: http://NAVIDROME_IP:4533
-      NAVIDROME_USERNAME: USERNAME
-      NAVIDROME_PASSWORD: PASSWORD
-      CSV_ENABLED: "true"
-      SYNC_SCHEDULE: "00 4 * * 1"
-      RECOMMENDED: "true"
-      RECOMMENDED_TRACKS: "10"
-      MIX: "true"
-      MIX_TRACKS: "10"
-      LIBRARY: "true"
-      LIBRARY_TRACKS: "50"
-      EXPLORATION: "true"
-      EXPLORATION_TRACKS: "25"
-      JAMS: "true"
-      JAMS_TRACKS: "25"
-      RUN_ON_STARTUP: "false"
-      REMOVE_OLD_TRACKS: "false"
-      PUID: 1000
-      PGID: 1000
+      TZ: ${TZ:-Europe/London}
+      LASTFM_USERNAME: ${LASTFM_USERNAME:-}
+      LZ_USERNAME: ${LZ_USERNAME:-}
+      NAVIDROME_URL: ${NAVIDROME_URL:-http://NAVIDROME_IP:4533}
+      NAVIDROME_USERNAME: ${NAVIDROME_USERNAME:-username}
+      NAVIDROME_PASSWORD: ${NAVIDROME_PASSWORD:-password}
+      CSV_ENABLED: "${CSV_ENABLED:-true}"
+      SYNC_SCHEDULE: "${SYNC_SCHEDULE:-00 4 * * 1}"
+      RECOMMENDED: "${RECOMMENDED:-true}"
+      RECOMMENDED_TRACKS: "${RECOMMENDED_TRACKS:-10}"
+      MIX: "${MIX:-true}"
+      MIX_TRACKS: "${MIX_TRACKS:-10}"
+      LIBRARY: "${LIBRARY:-true}"
+      LIBRARY_TRACKS: "${LIBRARY_TRACKS:-50}"
+      EXPLORATION: "${EXPLORATION:-true}"
+      EXPLORATION_TRACKS: "${EXPLORATION_TRACKS:-25}"
+      JAMS: "${JAMS:-true}"
+      JAMS_TRACKS: "${JAMS_TRACKS:-25}"
+      RUN_ON_STARTUP: "${RUN_ON_STARTUP:-false}"
+      REMOVE_OLD_TRACKS: "${REMOVE_OLD_TRACKS:-false}"
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
     volumes:
-      - /path/to/music:/music
-      - ./cookies.txt:/app/cookies/cookies.txt
-      - ./blocklist.json:/app/blocklist.json:ro #Optional
-      - ./csv_playlists/:/app/csv_playlists #Optional
+      - ${MUSIC_LIBRARY_PATH:-/path/to/music}:/music
+      - ${COOKIES_FILE_PATH:-./cookies.txt}:/app/cookies/cookies.txt
+      - ${BLOCKLIST_FILE_PATH:-./blocklist.json}:/app/blocklist.json:ro #Optional
+      - ${CSV_PLAYLISTS_PATH:-./csv_playlists}:/app/csv_playlists #Optional

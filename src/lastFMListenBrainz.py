@@ -1,16 +1,16 @@
 """A copy paste of existing logic"""
 
-from datetime import datetime
-import time
-import os
-from pathlib import Path
-from typing import Dict, List, Optional
-
 import logging
+import os
+import time
+from datetime import datetime
+from typing import Dict, List, Optional
 from zoneinfo import ZoneInfo
 
 import requests
 
+from blocklist import load_blocked_artists
+from config import music_dir
 from navidrome import Navidrome
 from ytdlp import YTDLP
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class ListenBrainzLastFM:
     def __init__(self, navidrome: Navidrome, ytdlp: YTDLP):
 
-        self.music_dir = Path("/music/navidrofm")
+        self.music_dir = music_dir()
         self.navidrome = navidrome
         self.ytdlp = ytdlp
 
@@ -38,25 +38,10 @@ class ListenBrainzLastFM:
 
         self.removeOldTracks = os.getenv("REMOVE_OLD_TRACKS", "false").lower() == "true"
 
-        # Load artist blocklist from /app/blocklist.json if present.
+        # Load the optional artist blocklist (``NAVIDROFM_BLOCKLIST_FILE``).
         # Format: {"artists": ["Artist Name", "Another Artist"]}
         # Matching is case-insensitive.
-        self.artist_blocklist: set = set()
-        blocklist_path = Path("/app/blocklist.json")
-        if blocklist_path.exists():
-            try:
-                import json as _json
-
-                with open(blocklist_path) as _f:
-                    _data = _json.load(_f)
-                self.artist_blocklist = {
-                    a.lower().strip() for a in _data.get("artists", [])
-                }
-                logger.info(
-                    f"Loaded artist blocklist: {len(self.artist_blocklist)} entries"
-                )
-            except Exception as e:
-                logger.error(f"Warning: Could not load blocklist.json: {e}")
+        self.artist_blocklist: set = load_blocked_artists()
 
         self.playlists = {
             "recommended": {
@@ -405,9 +390,9 @@ class ListenBrainzLastFM:
                 if song_id:
                     song_ids.append(song_id)
                     success_count += 1
-                    logger.info(f"  Found in library")
+                    logger.info("  Found in library")
                 else:
-                    logger.info(f"  Not found in library, trying next backup track")
+                    logger.info("  Not found in library, trying next backup track")
 
         else:
             playlist_dir = config["dir"]
@@ -465,7 +450,7 @@ class ListenBrainzLastFM:
                 existing_song_id = self.navidrome.search_navidrome_track(artist, title)
 
                 if existing_song_id:
-                    logger.info(f"  Already in Navidrome library, skipping download")
+                    logger.info("  Already in Navidrome library, skipping download")
                     song_ids.append(existing_song_id)
                     success_count += 1
                     skipped_count += 1
@@ -479,14 +464,14 @@ class ListenBrainzLastFM:
                     )
 
                     if downloaded:
-                        logger.info(f"  Downloaded successfully")
+                        logger.info("  Downloaded successfully")
                         success_count += 1
                         downloaded_tracks.append(downloaded)
                     else:
-                        logger.info(f"  Download failed, trying next backup track")
+                        logger.info("  Download failed, trying next backup track")
                 else:
                     logger.info(
-                        f"  Not found on YouTube Music, trying next backup track"
+                        "  Not found on YouTube Music, trying next backup track"
                     )
 
                 time.sleep(1)

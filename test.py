@@ -21,8 +21,8 @@ cmd = [
     "--sleep-interval",
     "2",
     "--no-update",
-    # "--cookies",
-    # "cookies.txt",
+    "--cookies",
+    "cookies.txt",
 ]
 cmd.append(url)
 # Run and capture/suppress harmless warnings if needed
